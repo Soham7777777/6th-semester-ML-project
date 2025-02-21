@@ -1,9 +1,13 @@
 import tomllib
-from flask import Flask
+from flask import Flask, redirect, url_for
 import click
 import os
 from flask.cli import FlaskGroup
 import sys
+import joblib # type: ignore
+
+
+model, scaler = joblib.load("wine_quality_model.pkl")
 
 
 title = '''
@@ -40,12 +44,10 @@ def make_app() -> Flask:
     application = Flask(__name__, instance_relative_config=True)
     config_file = ensure_configuration_availability(application.instance_path)
     application.config.from_file(config_file, load=tomllib.load, text=False)
-
-    from .blueprints import blog, admin
-    application.register_blueprint(blog.bp)
-    application.register_blueprint(admin.bp)
-
-    application.cli.add_command(test)
+    
+    from app.routes import predict
+    application.add_url_rule('/predict', 'predict', predict, methods=["GET", "POST"])
+    application.add_url_rule('/', 'home', lambda: redirect(url_for('predict')))
 
     click.echo(click.style(title, fg='green'))
     return application
@@ -54,10 +56,3 @@ def make_app() -> Flask:
 @click.group(cls=FlaskGroup, create_app=make_app)
 def cli() -> None:
     """The CLI to interact with this application."""
-
-@click.command()
-def test() -> None:
-    """Run tests.
-    """        
-    from app.tests import test as t 
-    t.run()
