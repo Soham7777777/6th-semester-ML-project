@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np # type: ignore
 from app.forms import WineQualityForm
 from flask import render_template, request
 from app import scaler, model
